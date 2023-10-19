@@ -8,7 +8,7 @@ This is an implementation of EMNLP 2023 paper *"PromptST: Abstract Prompt Learni
 ## 👀 Overview
 The motivation of our **PromptST** model is to broaden the abstract representation power of the encoder of S2T models.
 <div align="left">
-  <img src="https://github.com/ytf-philp/PromptST/assets/54100491/13025542-33c2-4f9b-b22e-3758c088f769" width="50%">
+  <img src="https://github.com/ytf-philp/PromptST/assets/54100491/13025542-33c2-4f9b-b22e-3758c088f769" width="70%">
 </div>
 
 
