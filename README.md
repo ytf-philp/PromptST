@@ -35,10 +35,10 @@ The models are trained based on pytorch.
 
 |  |                                           **Model**                                            |   
 |:--------:|:--------------------------------------------------------------------------------------:| 
-| En-De    | [Download]() | 
-| En-Ca    | [Download]() | 
-| En-Ar    | [Download]() | 
-| En-Tr    | [Download]() | 
+| En-De    | [Download](https://huggingface.co/philip-xxf/PromptST-en-de) | 
+| En-Ca    | [Download](https://huggingface.co/philip-xxf/PromptST-en-ca) | 
+| En-Ar    | [Download](https://huggingface.co/philip-xxf/PromptST-en-ar) | 
+| En-Tr    | [Download](https://huggingface.co/philip-xxf/PromptST-en-tr) | 
 
 
 ## Training & Generation Instruction
