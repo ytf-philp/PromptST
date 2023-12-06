@@ -2,7 +2,7 @@
 # PromptST: Abstract Prompt Learning for End-to-End Speech Translation
 
 
-This is an implementation of EMNLP 2023 paper *"PromptST: Abstract Prompt Learning for End-to-End Speech Translation"* (read paper [here]()). 
+This is an implementation of the EMNLP 2023 paper *"PromptST: Abstract Prompt Learning for End-to-End Speech Translation"* (read the paper [here](https://openreview.net/pdf?id=Nijnhwu1Uz)). 
 
 
 ## 👀 Overview
@@ -13,7 +13,7 @@ The motivation of our **PromptST** model is to broaden the abstract representati
 
 
 ### Result on CoVoST En-X dataset
-We report **case-sensitive detokenized BLEU** via sacrebleu toolkit.
+We report **case-sensitive detokenized BLEU** via the sacrebleu toolkit.
 
 | Model      | En-De | En-Ca | En-Ar | En-Tr | Avg.  |
 | ---------- |:-----:|:-----:|:-----:|:-----:|:-----:|
@@ -40,6 +40,9 @@ The models are trained based on pytorch.
 | En-Ar    | [Download](https://huggingface.co/philip-xxf/PromptST-en-ar) | 
 | En-Tr    | [Download](https://huggingface.co/philip-xxf/PromptST-en-tr) | 
 
+## All the code and scripts are still being updated and will be made public soon !!!
+
+
 
 ## Training & Generation Instruction
 ### ⚙️ Requirements and Installation
@@ -51,13 +54,14 @@ git clone git@github.com:ytf-philip/PromptST.git
 cd PromptST
 pip3 install -r requirements.txt
 ```
+
 ### Probing Task Analysis
 ```bash
 
 ```
 
 ### Training, Inference, Generation and Evaluation
-To train the model, take En-De as an example, you may run:
+To train the model, take En-De as an example; you may run:
 ```bash
 
 ```
