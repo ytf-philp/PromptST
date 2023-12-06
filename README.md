@@ -40,9 +40,9 @@ The models are trained based on pytorch.
 | En-Ar    | [Download](https://huggingface.co/philip-xxf/PromptST-en-ar) | 
 | En-Tr    | [Download](https://huggingface.co/philip-xxf/PromptST-en-tr) | 
 
-## All the code and scripts are still being updated and will be made public soon !!!
 
 
+# All the code and scripts are still being updated and will be made public soon !!!
 
 ## Training & Generation Instruction
 ### ⚙️ Requirements and Installation
