@@ -58,28 +58,29 @@ cd PromptST
 pip3 install -r requirements.txt
 ```
 
-### Probing Task Analysis
+### 🧪 Probing Task Analysis
 *  Download [Speech-Senteval](https://drive.google.com/file/d/1F-uXapnR1nJ1q81u1quBRtMv_-xJ564i/view?usp=share_link)
 *  Extract every layer representation and conduct probing tasks
-
+  
+Run the probing task script:
 ```
 python probing_task/speech_senteval_probing.py
 ```
 
-### Train PromptST ( en-de as an example )
+### 🚀 Train PromptST (Example: en-de)
 
-Preprocessing Data
+**Preprocessing Data**
 * Download Common Voice audio clips and transcripts (version 4).
 * Use data_process/dataset_de.py to save the processed dataset offline.
 ```
 python data_process/dataset_de.py
 ```
-Training
+**Training**
 * To train the model, take En-De as an example; you may run:
 ```
 python -m torch.distributed.launch --nproc_per_node=8 --master_port 21303  ./PromptST/main/en_de/en_de_continue.py
 ```
-Evaluation
+**Evaluation**
 * Convert model
 ```
 python  ./main/model_convert.py
