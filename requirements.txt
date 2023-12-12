@@ -1,0 +1,6 @@
+soundfile == 0.12.1
+tokenizer == 0.12.0
+numpy == 1.23.1
+sacrebleu == 1.5.1
+sentencepiece == 0.1.99
+transforemrs ==4.27.3
