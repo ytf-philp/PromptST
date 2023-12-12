@@ -1,1 +1,0 @@
-nohup python -m torch.distributed.launch --nproc_per_node=8 --master_port 21303  /data/ytf/PromptST/main/en_de/en_de_continue.py > log/en_de_continue_fixdecoder.log 2>&1 &
