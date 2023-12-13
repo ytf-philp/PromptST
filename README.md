@@ -28,6 +28,20 @@ The BLEU score of adding PromptST to different layers on the dev set.
 | 16-24 layers | 29.9 | 36.5 | 23.7 | 20.5 |
 | 12-24 layers | 30.1 | 37.4 | 23.8 | 21.0 |
 
+If you find this repo useful, please cite:
+
+```
+@inproceedings{yu-etal-2023-promptst,
+    title = "{P}rompt{ST}: Abstract Prompt Learning for End-to-End Speech Translation",
+    author = "Yu,Tengfei and Ding,Liang  and Liu,Xuebo and Chen,Kehai and Zhang,Meishan and Tao,Dacheng and Zhang,Min",
+    booktitle = "Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing",
+    year = "2023",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2023.emnlp-main.627",
+    pages = "10140--10154",
+}
+```
+
 ## Speech-Senteval Benchmark
 
   You can download the Speech-Senteval Benchmark at [Here](https://drive.google.com/file/d/1F-uXapnR1nJ1q81u1quBRtMv_-xJ564i/view?usp=share_link)
@@ -89,5 +103,5 @@ python  ./main/model_convert.py
 ```
 python -m torch.distributed.launch --nproc_per_node=4 --master_port 21393 --model_path ./output/model_convert ./main/en_de/en_de_inference.py
 ``` 
-#### We will continue improving our repository！！
-## Citation
+### Contact
+If you have any questions related to the code or the paper, feel free to email Tengfei Yu (921692739@qq.com).
