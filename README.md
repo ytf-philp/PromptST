@@ -74,11 +74,12 @@ pip3 install -r requirements.txt
 
 ### 🧪 Probing Task Analysis
 *  Download [Speech-Senteval](https://drive.google.com/file/d/1F-uXapnR1nJ1q81u1quBRtMv_-xJ564i/view?usp=share_link)
+*  Unzip speech_senteval and save it to the root/data path (the unzipped dataset should contain two folders, "probing_text" and "sent_audio")
 *  Extract every layer representation and conduct probing tasks
   
 Run the probing task script:
 ```
-python probing_task/speech_senteval_probing.py
+bash probing_task/bash_example.sh
 ```
 
 ### 🚀 Train PromptST (Example: en-de)
