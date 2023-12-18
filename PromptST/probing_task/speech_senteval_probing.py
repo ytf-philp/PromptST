@@ -2,27 +2,19 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 import pandas as pd
-import json, os, shutil
+import  os
 import torch.optim as optim
-import sys
 import numpy as np
-from transformers import BertConfig, Wav2Vec2Config, SpeechEncoderDecoderConfig, SpeechEncoderDecoderModel
+from transformers import SpeechEncoderDecoderConfig, SpeechEncoderDecoderModel
 from transformers import SpeechEncoderDecoderModel, Speech2Text2Processor
 from transformers import modeling_outputs
 from datasets import load_dataset
 import torch.utils.data as Data
 import soundfile as sf
 import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.transforms as transforms
-from torch.autograd import Variable
-import matplotlib.pyplot as plt
-import datetime
 from datasets import load_dataset
-import csv
 import pandas as pd
 import os
-from tqdm import tqdm
 from collections import Iterable
 import functools
 
@@ -37,21 +29,11 @@ def compare(A,B):
         return 1
 
 
-def get_model(device):
-    configg=SpeechEncoderDecoderConfig.from_pretrained("facebook/s2t-wav2vec2-large-en-de")
-    #configg.hidden_dropout_prob = 0.1
-    #configg.pre_seq_len = 40
-    #configg.prefix_projection = False
-    #configg.prefix_hidden_size = 512
-    #configg.layer_choice=12
-    processor = Speech2Text2Processor.from_pretrained("facebook/s2t-wav2vec2-large-en-de")
+def get_model(model_path="facebook/s2t-wav2vec2-large-en-de",device="cuda:0"):
+    configg=SpeechEncoderDecoderConfig.from_pretrained(model_path)
+    processor = Speech2Text2Processor.from_pretrained(model_path)
     model = SpeechEncoderDecoderModel.from_pretrained(
-    "facebook/s2t-wav2vec2-large-en-de",config=configg)
-    
-    #state_dict=torch.load("/prompt/S2T-tuning_new/mid-best-checkpoints/pytorch_model.bin",map_location=torch.device('cpu'))
-    #if list(state_dict.keys())[0].startswith('module.'):
-    #    state_dict1 = {k[7:]: v for k, v in state_dict.items()}
-    # model.load_state_dict(state_dict1)
+    model_path,config=configg)
     model.to(device)
     decoder_input_ids = torch.tensor([[model.config.decoder.decoder_start_token_id]]).to(device)
     return [processor,model,decoder_input_ids]  #--->return list
@@ -60,7 +42,7 @@ def save_checkpoint(state_dict, file_name):
     torch.save(state_dict, file_name)
 
 def save_csv(data,label,task,name,sche_step):
-    roo="./sentence_embedding/"+str(sche_step)+"/"
+    roo="sentence_embedding/"+str(sche_step)+"/"
     save_folder=roo+task
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
@@ -101,9 +83,11 @@ class MDataSet(Dataset):
     def set_split(self):
         for split in self.split_num:
             data_tmp = self.unsplit_data[self.fulldata['split'] == split]
+            if not os.path.exists(root+"/dataset_csv"):
+                os.makedirs(root+"/dataset_csv")
             if(len(data_tmp))!= 0:
                 self.save_split.append(split)
-                data_tmp.to_csv("dataset_csv/senteval_"+split+".csv",index=None)
+                data_tmp.to_csv(root+"/dataset_csv/senteval_"+split+".csv",index=None)
 
     def __len__(self):
         return len(self.data)
@@ -111,9 +95,9 @@ class MDataSet(Dataset):
         return self.get_categories()
 
     def get_dataset(self):
-        train_csv="dataset_csv/senteval_tr.csv"
-        test_csv="dataset_csv/senteval_te.csv"
-        validate_csv="dataset_csv/senteval_va.csv"
+        train_csv=root+"/dataset_csv/senteval_tr.csv"
+        test_csv=root+"/dataset_csv/senteval_te.csv"
+        validate_csv=root+"/dataset_csv/senteval_va.csv"
         data_file={}
         for split in self.save_split:
             if split == "tr":
@@ -156,8 +140,6 @@ class get_embedding():
         for i in range(len(self.databatch)):
             self.features_new.append(torch.tensor([item.cpu().detach().numpy() for item in self.process_data(i,add)],device='cpu'))
             torch.cuda.empty_cache()
-        #print(len(self.features_new))
-        #print(self.features_new[0].shape)
         self.result()
         del self.model
         torch.cuda.empty_cache()
@@ -226,6 +208,7 @@ class get_embedding():
         audio=[]
         #train
         for i in range(len(self.data)):
+            print(self.data["file"][i])
             speech,_=sf.read(self.data["file"][i])
             audio.append(speech)
         self.data=self.data.add_column("audio",audio)
@@ -281,10 +264,10 @@ class Classify(nn.Module):
         x = self.fc4(x)
         return x
 
-def getDataSplit(dataset: MDataSet,device ,split,model_list,batch_size,task,sche_step,add):
+def getDataSplit(dataset: MDataSet,device,split,model_list,batch_size,task,layer_choice):
     datasets=dataset.dataset
-    data,label=get_embedding(add,datasets[split],device,batch_size,model_list).get_item()
-    save_csv(data,label,task,split+".csv",sche_step)
+    data,label=get_embedding(layer_choice,datasets[split],device,batch_size,model_list).get_item()
+    save_csv(data,label,task,split+".csv",layer_choice)
     tensor_data=Data.TensorDataset(data,label)
     print(data.shape)
 
@@ -306,13 +289,13 @@ class AverageMeter():
         self.count += n
         self.avg = self.sum /self.count
        
-def train( task,dataset,dataloader,model_list, device,num_epochs=70, lr=0.001, sche_step=50, save_path="", keep_epoch=10, resume=False,bs=1,add=0):
+def train(task,dataset,dataloader,model_list, device,num_epochs=70, lr=0.001, save_path="", keep_epoch=10, resume=False,bs=1,layer_choice=0):
     class_num = len(dataset.categories)
     net = Classify(class_num)
     
     net.to(device)
     optimizer = optim.Adam(net.parameters(), lr=lr,weight_decay=0.0001)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=sche_step, gamma=0.3)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.3)
 
     #save model
     print(f"save_path={save_path}")
@@ -328,7 +311,7 @@ def train( task,dataset,dataloader,model_list, device,num_epochs=70, lr=0.001, s
     criterion = nn.CrossEntropyLoss()
     net.train()
     
-    dataloader1 = getDataSplit(dataset,device,'validate',model_list,bs,task,sche_step,add)
+    dataloader1 = getDataSplit(dataset,device,'validate',model_list,bs,task,layer_choice)
     print("----------------------------------validate feature extract finished-----------------------------------------")    
     losses=[]
     loss_meter = AverageMeter()
@@ -357,14 +340,6 @@ def train( task,dataset,dataloader,model_list, device,num_epochs=70, lr=0.001, s
             acc = validate(net, dataloader1, device)
             print(f"zzzz-Z va epoch={epoch} task={task} categories={len(dataset.categories)}, acc={acc}")
         
-        
-        if epoch > num_epochs-keep_epoch and save_path:
-            save_checkpoint({
-                'model': net.state_dict(),
-                'epoch': epoch,
-                'lr': scheduler.get_lr()
-            }, file_name=f"{save_path}/checkpoint{epoch}.pt")
-            shutil.copy(f"{save_path}/checkpoint{epoch}.pt", f"{save_path}/checkpoint_last.pt")
 
     return net, num_epochs
 
@@ -381,27 +356,34 @@ def validate(net, dataloader: DataLoader, device):
     return accuracy.avg
 
 
-def train_validate(model_list,task,bs,device, num_epochs=70, sche_step=50, lr=0.001,add=0):
+def train_validate(model_list,task,bs,device, num_epochs=70, lr=0.001,layer_choice=0):
     print(f">>> {task}")
-    dataset = MDataSet(rf"{root}/data/probing_small/{task}.txt", rf"{root}/data/TTS/sent_audio/{task}")
-
+    dataset = MDataSet(rf"{root}/data/probing_text/{task}.txt", rf"{root}/data/sent_audio/{task}")
     print("------------------------------------start train--------------------------------------------")
     
-    save_folder = f"{root}/probing_generate/{task}/{sche_step}"
+    save_folder = f"{root}/probing_generate/{task}/{str(layer_choice)}"
     if not os.path.exists(save_folder):
         os.makedirs(save_folder)
 
-    dataloader=getDataSplit(dataset,device,"train",model_list,bs,task,sche_step,add)
+    dataloader=getDataSplit(dataset,device,"train",model_list,bs,task,layer_choice)
+    
     print("----------------------------------train feature extract finished-----------------------------------------")
-    net, epoch = train(task,dataset,dataloader,model_list,device ,save_path=save_folder, num_epochs=num_epochs, sche_step=sche_step, lr=lr,bs=bs,add=add)
+    net, epoch = train(task=task,
+                       dataset=dataset,
+                       dataloader=dataloader,
+                       model_list=model_list,
+                       device=device,
+                       save_path=save_folder,
+                       num_epochs=num_epochs,
+                       lr=lr,bs=bs,layer_choice=layer_choice)
+    
     print("-----------------------------------finish train------------------------------")
-
     print("-----------------------------------start train-test-----------------------------")
     acc = validate(net, dataloader,device)
     print(f"zzzz-Z tr epoch={epoch} task={task} categories={len(dataset.categories)}, acc={acc}")
 
     print("--------------------------------------start test----------------------------------------")
-    dataloader1 = getDataSplit(dataset,device, 'test',model_list,bs,task,sche_step,add)
+    dataloader1 = getDataSplit(dataset,device, 'test',model_list,bs,task,layer_choice)
     acc = validate(net, dataloader1,device)
     print(f"zzzz-Z va epoch={epoch} task={task} categories={len(dataset.categories)}, acc={acc}")
 
@@ -409,30 +391,31 @@ def train_validate(model_list,task,bs,device, num_epochs=70, sche_step=50, lr=0.
 
 if __name__ == '__main__':
     import sys
-    root = r"./SentEval-main"  #sent_represents/$feature/${ck_name}.${task}.1.txt"
-    bs=1
-    num_epochs = 10
-    cudaa="7"
-    if len(sys.argv)>1:
-        sche_step = sys.argv[1]
-        cudaa=sys.argv[2]
-        tasks = sys.argv[3]
-    else:
-        sche_steps = [16,20]
-        tasks = ["bigram_shift","odd_man_out"]
-    lr = 0.0001
-    device = torch.device("cuda:"+cudaa if torch.cuda.is_available() else "cpu")
-    print(f"-----------------------------------loading model ----------------------------------------")
-    model_list=get_model(device)
-    print(len(model_list))
-    for i, task in enumerate(tasks):
-        for sche_step in sche_steps:
-            add=int(sche_step)
-            print("--------------------------------------this is task:",task,"--------",sche_step,"------------------------------------------------------------")
-            train_validate( model_list, task, bs,device,num_epochs, add , lr=lr,add=add)
+    import argparse
+    # 创建解析器
+    parser = argparse.ArgumentParser(description="Script Arguments")
+    # 添加参数
+    parser.add_argument('--root', default="." , help='Schedule Step')
+    parser.add_argument('--layer_choice', type=int, default=12, help='Schedule Step')
+    parser.add_argument('--cuda', type=str, default="0", help='CUDA device')
+    parser.add_argument('--task', type=str, default="bigram_shift", help='Tasks')
+    parser.add_argument('--bs', type=int, default=1, help='Batch size')
+    parser.add_argument('--num_epochs', type=int, default=10, help='Number of epochs')
+    parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
+    parser.add_argument('--model_path', type=str, default="/workspace/AmbigST-de/model_new", help='the model to analysis')
+    
+    args = parser.parse_args()
 
+    layer_choice = args.layer_choice
+    cuda = args.cuda
+    task = args.task
+    bs = args.bs
+    num_epochs = args.num_epochs
+    lr = args.lr
+    root = args.root
+    model_path = args.model_path
+    device = torch.device("cuda:"+cuda if torch.cuda.is_available() else "cpu")
+    model_list=get_model(model_path,device) #loading model
 
-
-
-        
-        
+    print("--------------------------------------this is task:",task,"--------",layer_choice,"------------------------------------------------------------")
+    train_validate(model_list,task, bs,device,num_epochs, lr,layer_choice)
